@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Add a default marker</title>
+    <meta property="og:description" content="Add a default marker to the map." />
+    <meta property="og:category" content="Markers" />
+    <meta property="og:order" content="1" />
+    <meta property="og:created" content="2025-06-25" />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css' />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body,
+        #map {
+            height: 100%;
+        }
+
+
+        /* El punto rojo central */
+        .marcador-pulso {
+            width: 16px;
+            height: 16px;
+            background-color: blue;
+            border-radius: 50%;
+            position: relative;
+            /* Opcional: un pequeño borde blanco para que resalte sobre el mapa satelital */
+            border: 2px solid white;
+        }
+
+        /* La onda expansiva */
+        .marcador-pulso::after {
+            content: '';
+            position: absolute;
+            /* Centramos la onda con respecto al punto */
+            top: -2px;
+            left: -2px;
+            width: 100%;
+            height: 100%;
+            background-color: blue;
+            border-radius: 50%;
+            z-index: -1;
+            /* Asignamos la animación infinita */
+            animation: animacion-pulso 1.5s ease-out infinite;
+        }
+
+        /* Definimos cómo crece y se desvanece la onda */
+        @keyframes animacion-pulso {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(4);
+                /* Crece hasta 4 veces su tamaño */
+                opacity: 0;
+                /* Desaparece suavemente */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <script type="module">
+        import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.mjs';
+
+        const map=new maplibregl.Map({
+            container: 'map',
+            center: [-74.2219243,-13.1477916],
+            zoom: 6,
+            // Definimos el estilo manualmente para usar tiles de satélite
+            style: {
+                'version': 8,
+                'sources': {
+                    'satelite-esri': {
+                        'type': 'raster',
+                        // URL pública de las imágenes satelitales de Esri
+                        'tiles': [
+                            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                        ],
+                        'tileSize': 256,
+                        'attribution': '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                    }
+                },
+                'layers': [
+                    {
+                        'id': 'capa-satelite',
+                        'type': 'raster',
+                        'source': 'satelite-esri',
+                        'minzoom': 0,
+                        'maxzoom': 19
+                    }
+                ]
+            }
+        });
+
+        const miIcono=document.createElement('div');
+
+        // 2. Darle estilo y asignar tu imagen
+        // 1. Crear el elemento HTML para el marcador
+        const elementoMarcador=document.createElement('div');
+        elementoMarcador.className='marcador-pulso';
+
+        const marker=new maplibregl.Marker({
+            element: elementoMarcador,
+            anchor: 'bottom' // Hace que la parte inferior de la imagen toque la coordenada exacta
+        })
+            .setLngLat([-74.2219,
+            -13.1477916])
+            .addTo(map);
+
+
+
+    </script>
+</body>
+
+</html>

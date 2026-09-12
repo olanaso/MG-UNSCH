@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Add a GeoJSON line</title>
+    <meta property="og:description"
+        content="Add a GeoJSON line to a map using addSource, then style it using addLayer’s paint properties." />
+    <meta property="og:category" content="Vector & GeoJSON" />
+    <meta property="og:order" content="2" />
+    <meta property="og:created" content="2025-06-25" />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css' />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body,
+        #map {
+            height: 100%;
+        }
+
+        #panel-mapas-base {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+            padding: 12px;
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
+            font-family: Arial, sans-serif;
+        }
+
+        #panel-mapas-base strong,
+        #panel-mapas-base label {
+            display: block;
+        }
+
+        #panel-mapas-base strong {
+            margin-bottom: 8px;
+        }
+
+        #panel-mapas-base label {
+            margin: 6px 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="panel-mapas-base">
+        <strong>Mapas base</strong>
+        <label>
+            <input type="radio" name="mapa-base" value="esri-world-imagery" checked>
+            ESRI World Imagery
+        </label>
+        <label>
+            <input type="radio" name="mapa-base" value="google-relieve">
+            Google relieve
+        </label>
+        <label>
+            <input type="radio" name="mapa-base" value="google-hybrid">
+            Google Hybrid
+        </label>
+        <label>
+            <input type="radio" name="mapa-base" value="openstreetmap">
+            OpenStreetMap
+        </label>
+        <label>
+            <input type="radio" name="mapa-base" value="eox-s2cloudless-2024">
+            EOX Sentinel-2 cloudless 2024
+        </label>
+        <hr>
+        <strong>Superposiciones</strong>
+        <label>
+            <input type="checkbox" id="chk-hydrography" checked>
+            Hydrography overlay layer by EOX - 4326
+        </label>
+    </div>
+    <script type="module">
+        import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.mjs';
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                sources: {
+                    /* ==============================================
+                       ESRI SATÉLITE
+                       ============================================== */
+                    'esri-world-imagery': {
+                        type: 'raster',
+                        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                        tileSize: 256,
+                        attribution: '&copy; Esri World Imagery'
+                    },
+                    'google-relieve': {
+                        type: 'raster',
+                        tiles: ['https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'],
+                        tileSize: 256,
+                        attribution: '&copy; Google'
+                    },
+                    'google-hybrid': {
+                        type: 'raster',
+                        tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+                        tileSize: 256,
+                        attribution: '&copy; Google'
+                    },
+                    'openstreetmap': {
+                        type: 'raster',
+                        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                        tileSize: 256,
+                        attribution: '&copy; OpenStreetMap contributors'
+                    },
+                    'eox-s2cloudless-2024': {
+                        type: 'raster',
+                        tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=s2cloudless-2024_3857&styles=default&format=image/jpeg&transparent=false&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256'],
+                        tileSize: 256,
+                        attribution: '&copy; EOX Sentinel-2 cloudless 2024'
+                    },
+                    'eox-hydrography': {
+                        type: 'raster',
+                        tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=hydrography&styles=&format=image/png&transparent=true&srs=EPSG:4326&bbox={bbox-epsg-4326}&width=256&height=256'],
+                        tileSize: 256,
+                        attribution: '&copy; EOX'
+                    }
+                },
+                layers: [{
+                    id: 'esri-world-imagery',
+                    type: 'raster',
+                    source: 'esri-world-imagery',
+                    minzoom: 0,
+                    maxzoom: 19
+                }, {
+                    id: 'google-relieve',
+                    type: 'raster',
+                    source: 'google-relieve',
+                    layout: {
+                        visibility: 'none'
+                    },
+                    minzoom: 0,
+                    maxzoom: 20
+                }, {
+                    id: 'google-hybrid',
+                    type: 'raster',
+                    source: 'google-hybrid',
+                    layout: {
+                        visibility: 'none'
+                    },
+                    minzoom: 0,
+                    maxzoom: 21
+                }, {
+                    id: 'openstreetmap',
+                    type: 'raster',
+                    source: 'openstreetmap',
+                    layout: {
+                        visibility: 'none'
+                    },
+                    minzoom: 0,
+                    maxzoom: 19
+                }, {
+                    id: 'eox-s2cloudless-2024',
+                    type: 'raster',
+                    source: 'eox-s2cloudless-2024',
+                    layout: {
+                        visibility: 'none'
+                    },
+                    minzoom: 0,
+                    maxzoom: 21
+                }, {
+                    id: 'eox-hydrography',
+                    type: 'raster',
+                    source: 'eox-hydrography',
+                    minzoom: 0,
+                    maxzoom: 20
+                }]
+            },
+            center: [-76.324, -13.168],
+            zoom: 14
+        });
+
+        map.on('load', () => {
+
+            document.querySelectorAll('input[name="mapa-base"]').forEach((control) => {
+                control.addEventListener('change', (event) => {
+                    const mapaBaseSeleccionado = event.target.value;
+
+                    ['esri-world-imagery', 'google-relieve', 'google-hybrid', 'openstreetmap', 'eox-s2cloudless-2024'].forEach((id) => {
+                        map.setLayoutProperty(
+                            id,
+                            'visibility',
+                            id === mapaBaseSeleccionado ? 'visible' : 'none'
+                        );
+                    });
+                });
+            });
+
+            document.getElementById('chk-hydrography').addEventListener('change', (event) => {
+                map.setLayoutProperty(
+                    'eox-hydrography',
+                    'visibility',
+                    event.target.checked ? 'visible' : 'none'
+                );
+            });
+
+
+
+            map.addSource('sectores', {
+                'type': 'geojson',
+                'data': 'data/sectores.geojson'
+            });
+
+            map.addLayer({
+                'id': 'sectores-fill',
+                'type': 'fill',
+                'source': 'sectores',
+                'paint': {
+                    'fill-color': 'red',
+                    'fill-opacity': 0.35
+                }
+            });
+            map.addLayer({
+                'id': 'sectores-outline',
+                'type': 'line',
+                'source': 'sectores',
+                'paint': {
+                    'line-color': 'blue',
+                    'line-width': 5
+                }
+            });
+
+
+            map.addSource('conseciones', {
+                'type': 'geojson',
+                'data': 'http://3.233.4.153:8080/geoserver/ddp/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=ddp%3Ageo_anp_concesion&maxFeatures=50&outputFormat=application%2Fjson'
+            });
+
+            map.addLayer({
+                'id': 'conseciones-fill',
+                'type': 'fill',
+                'source': 'conseciones',
+                'paint': {
+                    'fill-color': 'green',
+                    'fill-opacity': 1
+                }
+            });
+            map.addLayer({
+                'id': 'conseciones-outline',
+                'type': 'line',
+                'source': 'conseciones',
+                'paint': {
+                    'line-color': 'blue',
+                    'line-width': 6
+                }
+            });
+
+
+
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Add a GeoJSON line</title>
+    <meta property="og:description"
+        content="Add a GeoJSON line to a map using addSource, then style it using addLayer’s paint properties." />
+    <meta property="og:category" content="Vector & GeoJSON" />
+    <meta property="og:order" content="2" />
+    <meta property="og:created" content="2025-06-25" />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css' />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body,
+        #map {
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script type="module">
+        import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.mjs';
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                sources: {
+                    /* ==============================================
+                       ESRI SATÉLITE
+                       ============================================== */
+                    'esri-satelite': {
+                        type: 'raster',
+                        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                        tileSize: 256,
+                        attribution: '&copy; Esri'
+                    }
+                },
+                layers: [{
+                    id: 'esri-satelite',
+                    type: 'raster',
+                    source: 'esri-satelite',
+                    minzoom: 0,
+                    maxzoom: 20
+                }]
+            },
+            center: [-76.324, -13.168],
+            zoom: 14
+        });
+
+        map.on('load', () => {
+
+
+
+            map.addSource('sectores', {
+                'type': 'geojson',
+                'data': 'data/sectores.geojson'
+            });
+
+            map.addLayer({
+                'id': 'sectores-fill',
+                'type': 'fill',
+                'source': 'sectores',
+                'paint': {
+                    'fill-color': 'red',
+                    'fill-opacity': 0.35
+                }
+            });
+            map.addLayer({
+                'id': 'sectores-outline',
+                'type': 'line',
+                'source': 'sectores',
+                'paint': {
+                    'line-color': 'blue',
+                    'line-width': 5
+                }
+            });
+
+
+            map.addSource('conseciones', {
+                'type': 'geojson',
+                'data': 'http://3.233.4.153:8080/geoserver/ddp/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=ddp%3Ageo_anp_concesion&maxFeatures=50&outputFormat=application%2Fjson'
+            });
+
+            map.addLayer({
+                'id': 'conseciones-fill',
+                'type': 'fill',
+                'source': 'conseciones',
+                'paint': {
+                    'fill-color': 'green',
+                    'fill-opacity': 1
+                }
+            });
+            map.addLayer({
+                'id': 'conseciones-outline',
+                'type': 'line',
+                'source': 'conseciones',
+                'paint': {
+                    'line-color': 'blue',
+                    'line-width': 6
+                }
+            });
+
+
+
+        });
+    </script>
+</body>
+
+</html>

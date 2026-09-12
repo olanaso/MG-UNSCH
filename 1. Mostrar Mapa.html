@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Display a map</title>
+    <meta property="og:description" content="Initialize a map in an HTML element with MapLibre GL JS." />
+    <meta property="og:category" content="Getting Started" />
+    <meta property="og:order" content="1" />
+    <meta property="og:created" content="2025-06-25" />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css' />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body,
+        #map {
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script type="module">
+        import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.mjs';
+
+        class CustomLogoControl {
+            onAdd (map) {
+                this._map=map;
+                this._container=document.createElement('div');
+                // Usa la clase de controles de maplibre para que herede los márgenes correctos
+                this._container.className='maplibregl-ctrl';
+
+                // Inserta tu logo personalizado aquí (reemplaza la URL)
+                this._container.innerHTML=`
+            <a href="https://tu-sitio-web.com" target="_blank" rel="noopener nofollow">
+                <img src="https://posgrado.unsch.edu.pe/wp-content/uploads/2025/08/cropped-logo-posgrado.jpg" 
+                     alt="Mi Logo" 
+                     style="height: 80px; cursor: pointer; padding: 5px;">
+            </a>
+        `;
+                return this._container;
+            }
+
+            onRemove () {
+                this._container.parentNode.removeChild(this._container);
+                this._map=undefined;
+            }
+        }
+
+        const map=new maplibregl.Map({
+            container: 'map', // container id
+            style: 'https://demotiles.maplibre.org/style.json', // style URL
+            center: [0,0], // starting position [lng, lat]
+            zoom: 1, // starting zoom
+            maplibreLogo: false
+        });
+
+        // 3. Añadir tu logo personalizado al mapa 
+        // Puedes elegir la posición: 'bottom-left', 'bottom-right', 'top-left', 'top-right'
+        map.addControl(new CustomLogoControl(),'bottom-left');
+    </script>
+</body>
+
+</html>
