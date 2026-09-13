@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Add a default marker</title>
+    <meta property="og:description" content="Add a default marker to the map." />
+    <meta property="og:category" content="Markers" />
+    <meta property="og:order" content="1" />
+    <meta property="og:created" content="2025-06-25" />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css' />
+    <link rel='stylesheet' href='https://unpkg.com/mapbox-gl@1.13.0/dist/mapbox-gl.css' />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body,
+        #map {
+            height: 100%;
+        }
+
+
+        /* El punto rojo central */
+        .marcador-pulso {
+            width: 16px;
+            height: 16px;
+            background-color: blue;
+            border-radius: 50%;
+            position: relative;
+            /* Opcional: un pequeño borde blanco para que resalte sobre el mapa satelital */
+            border: 2px solid white;
+        }
+
+        /* La onda expansiva */
+        .marcador-pulso::after {
+            content: '';
+            position: absolute;
+            /* Centramos la onda con respecto al punto */
+            top: -2px;
+            left: -2px;
+            width: 100%;
+            height: 100%;
+            background-color: blue;
+            border-radius: 50%;
+            z-index: -1;
+            /* Asignamos la animación infinita */
+            animation: animacion-pulso 1.5s ease-out infinite;
+        }
+
+        /* Definimos cómo crece y se desvanece la onda */
+        @keyframes animacion-pulso {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(4);
+                /* Crece hasta 4 veces su tamaño */
+                opacity: 0;
+                /* Desaparece suavemente */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <script type="module">
+        import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.mjs';
+
+        window.mapboxgl = { ...maplibregl };
+        await new Promise((resolve, reject) => {
+            const pluginScript = document.createElement('script');
+            pluginScript.src = 'https://aesqe.github.io/mapboxgl-minimap/mapboxgl-control-minimap.js';
+            pluginScript.onload = resolve;
+            pluginScript.onerror = reject;
+            document.head.appendChild(pluginScript);
+        });
+
+        if (typeof window.mapboxgl.Minimap !== 'function') {
+            window.mapboxgl.Minimap = class {
+                constructor(options = {}) {
+                    this.options = options;
+                }
+
+                onAdd (parentMap) {
+                    this.parentMap = parentMap;
+                    this.container = document.createElement('div');
+                    this.container.id = this.options.id || 'mapa-miniatura';
+                    this.container.className = 'mapboxgl-ctrl-minimap mapboxgl-ctrl';
+                    this.container.style.width = this.options.width || '240px';
+                    this.container.style.height = this.options.height || '160px';
+                    parentMap.getContainer().appendChild(this.container);
+
+                    this.minimap = new maplibregl.Map({
+                        container: this.container,
+                        style: this.options.style,
+                        center: this.options.center || parentMap.getCenter(),
+                        zoom: this.options.zoom || 5,
+                        interactive: false,
+                        attributionControl: false
+                    });
+                    this.sync = () => this.minimap.jumpTo({
+                        center: parentMap.getCenter(),
+                        zoom: Math.max(0, parentMap.getZoom() - 4)
+                    });
+                    parentMap.on('move', this.sync);
+                    return this.container;
+                }
+
+                onRemove () {
+                    this.parentMap.off('move', this.sync);
+                    this.minimap.remove();
+                    this.container.remove();
+                }
+            };
+        }
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            center: [-74.2219243, -13.1477916],
+            zoom: 6,
+            // Definimos el estilo manualmente para usar tiles de satélite
+            style: {
+                'version': 8,
+                'sources': {
+                    'satelite-esri': {
+                        'type': 'raster',
+                        // URL pública de las imágenes satelitales de Esri
+                        'tiles': [
+                            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                        ],
+                        'tileSize': 256,
+                        'attribution': '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                    }
+                },
+                'layers': [
+                    {
+                        'id': 'capa-satelite',
+                        'type': 'raster',
+                        'source': 'satelite-esri',
+                        'minzoom': 0,
+                        'maxzoom': 19
+                    }
+                ]
+            }
+        });
+
+        map.addControl(new mapboxgl.Minimap({
+            id: 'mapa-miniatura',
+            width: '240px',
+            height: '160px',
+            style: map.getStyle(),
+            center: [-74.2219243, -13.1477916],
+            zoom: 5,
+            lineColor: '#ffffff',
+            lineWidth: 2,
+            lineOpacity: 1,
+            fillColor: '#1683d8',
+            fillOpacity: 0.2,
+            dragPan: false,
+            scrollZoom: false,
+            boxZoom: false,
+            dragRotate: false,
+            keyboard: false,
+            doubleClickZoom: false,
+            touchZoomRotate: false
+        }), 'top-right');
+
+        const miIcono = document.createElement('div');
+
+        // 2. Darle estilo y asignar tu imagen
+        // 1. Crear el elemento HTML para el marcador
+        const elementoMarcador = document.createElement('div');
+        elementoMarcador.className = 'marcador-pulso';
+
+        const marker = new maplibregl.Marker({
+            element: elementoMarcador,
+            anchor: 'bottom' // Hace que la parte inferior de la imagen toque la coordenada exacta
+        })
+            .setLngLat([-74.2219,
+            -13.1477916])
+            .addTo(map);
+
+
+
+    </script>
+</body>
+
+</html>

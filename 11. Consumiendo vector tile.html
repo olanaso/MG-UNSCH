@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Add a GeoJSON line</title>
+    <meta property="og:description"
+        content="Add a GeoJSON line to a map using addSource, then style it using addLayer’s paint properties." />
+    <meta property="og:category" content="Vector & GeoJSON" />
+    <meta property="og:order" content="2" />
+    <meta property="og:created" content="2025-06-25" />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css' />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body,
+        #map {
+            height: 100%;
+        }
+
+        #panel-mapas-base {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+            padding: 12px;
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
+            font-family: Arial, sans-serif;
+        }
+
+
+        #panel-mapas-base strong,
+        #panel-mapas-base label {
+            display: block;
+        }
+
+        #panel-mapas-base strong {
+            margin-bottom: 8px;
+        }
+
+        #panel-mapas-base label {
+            margin: 6px 0;
+            cursor: pointer;
+        }
+
+        #sidebar-distritos {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            width: 250px;
+            height: 100%;
+            padding: 18px 14px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.25);
+            font-family: Arial, sans-serif;
+        }
+
+        #sidebar-distritos h2 {
+            margin: 0 0 6px;
+            font-size: 20px;
+        }
+
+        #sidebar-distritos p {
+            margin: 0 0 14px;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .distrito-item {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 9px 10px;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            background: #fff;
+            color: #222;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .distrito-item:hover,
+        .distrito-item.activo {
+            border-color: #1976d2;
+            background: #e8f1fb;
+        }
+
+        #tabla-propiedades-distrito {
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+            z-index: 3;
+            min-width: 250px;
+            max-width: 320px;
+            max-height: 260px;
+            overflow-y: auto;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 6px;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+            font-family: Arial, sans-serif;
+        }
+
+        #tabla-propiedades-distrito h3 {
+            margin: 0 0 8px;
+            font-size: 15px;
+        }
+
+        #tabla-propiedades-distrito table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        #tabla-propiedades-distrito th,
+        #tabla-propiedades-distrito td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        #tabla-propiedades-distrito th {
+            width: 42%;
+            color: #555;
+        }
+
+        @media (max-width: 600px) {
+            #sidebar-distritos {
+                width: 210px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button id="fly-to">Fly to Lima - Ayacucho </button>
+    <div id="map"></div>
+    <aside id="sidebar-distritos">
+        <h2>Distritos de Huamanga</h2>
+        <p>Selecciona un distrito para ir a su ubicación.</p>
+        <button class="distrito-item" data-lng="-74.223" data-lat="-13.155">Ayacucho</button>
+        <button class="distrito-item" data-lng="-74.033" data-lat="-13.218">Acocro</button>
+        <button class="distrito-item" data-lng="-74.094" data-lat="-13.047">Acos Vinchos</button>
+        <button class="distrito-item" data-lng="-74.214" data-lat="-13.175">Andres Avelino Caceres Dorregaray</button>
+        <button class="distrito-item" data-lng="-74.2220" data-lat="-13.1844">Carmen Alto</button>
+        <button class="distrito-item" data-lng="-74.305" data-lat="-13.392">Chiara</button>
+        <button class="distrito-item" data-lng="-74.407" data-lat="-13.213">Jesus Nazareno</button>
+        <button class="distrito-item" data-lng="-74.092" data-lat="-13.193">Ocros</button>
+        <button class="distrito-item" data-lng="-74.211" data-lat="-13.050">Pacaycasa</button>
+        <button class="distrito-item" data-lng="-74.140" data-lat="-13.046">Quinua</button>
+        <button class="distrito-item" data-lng="-74.365" data-lat="-13.107">San Jose de Ticllas</button>
+        <button class="distrito-item" data-lng="-74.220" data-lat="-13.164">San Juan Bautista</button>
+        <button class="distrito-item" data-lng="-74.320" data-lat="-13.080">Santiago de Pischa</button>
+        <button class="distrito-item" data-lng="-74.292" data-lat="-13.213">Socos</button>
+        <button class="distrito-item" data-lng="-74.107" data-lat="-13.202">Tambillo</button>
+        <button class="distrito-item" data-lng="-74.353" data-lat="-13.307">Vinchos</button>
+    </aside>
+    <section id="tabla-propiedades-distrito" aria-live="polite">
+        <h3>Distrito seleccionado</h3>
+        <table>
+            <tbody id="propiedades-distrito-body">
+                <tr>
+                    <td colspan="2">Pasa el mouse sobre un distrito.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+    <div id="panel-mapas-base">
+        <strong>Mapas base</strong>
+        <label>
+            <input type="radio" name="mapa-base" value="esri-world-imagery" checked>
+            ESRI World Imagery
+        </label>
+        <label>
+            <input type="radio" name="mapa-base" value="google-relieve">
+            Google relieve
+        </label>
+        <label>
+            <input type="radio" name="mapa-base" value="google-hybrid">
+            Google Hybrid
+        </label>
+        <label>
+            <input type="radio" name="mapa-base" value="openstreetmap">
+            OpenStreetMap
+        </label>
+        <label>
+            <input type="radio" name="mapa-base" value="eox-s2cloudless-2024">
+            EOX Sentinel-2 cloudless 2024
+        </label>
+        <label>
+            <input type="radio" name="mapa-base" value="narwassco-unvt">
+            Narwassco UNVT
+        </label>
+        <hr>
+        <strong>Superposiciones</strong>
+        <label>
+            <input type="checkbox" id="chk-hydrography" checked>
+            Hydrography overlay layer by EOX - 4326
+        </label>
+        <label>
+            <input type="checkbox" id="chk-distritos-huamanga" checked>
+            Distritos de Huamanga
+        </label>
+    </div>
+    <script type="module">
+        import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.mjs';
+
+        const estiloBaseLocal = {
+            version: 8,
+            sources: {
+                /* ==============================================
+                   ESRI SATÉLITE
+                   ============================================== */
+                'esri-world-imagery': {
+                    type: 'raster',
+                    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                    tileSize: 256,
+                    attribution: '&copy; Esri World Imagery'
+                },
+                'google-relieve': {
+                    type: 'raster',
+                    tiles: ['https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'],
+                    tileSize: 256,
+                    attribution: '&copy; Google'
+                },
+                'google-hybrid': {
+                    type: 'raster',
+                    tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+                    tileSize: 256,
+                    attribution: '&copy; Google'
+                },
+                'openstreetmap': {
+                    type: 'raster',
+                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    attribution: '&copy; OpenStreetMap contributors'
+                },
+                'eox-s2cloudless-2024': {
+                    type: 'raster',
+                    tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=s2cloudless-2024_3857&styles=default&format=image/jpeg&transparent=false&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256'],
+                    tileSize: 256,
+                    attribution: '&copy; EOX Sentinel-2 cloudless 2024'
+                },
+                'eox-hydrography': {
+                    type: 'raster',
+                    tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=hydrography&styles=&format=image/png&transparent=true&srs=EPSG:4326&bbox={bbox-epsg-4326}&width=256&height=256'],
+                    tileSize: 256,
+                    attribution: '&copy; EOX'
+                }
+            },
+            layers: [{
+                id: 'esri-world-imagery',
+                type: 'raster',
+                source: 'esri-world-imagery',
+                minzoom: 0,
+                maxzoom: 19
+            }, {
+                id: 'google-relieve',
+                type: 'raster',
+                source: 'google-relieve',
+                layout: { visibility: 'none' },
+                minzoom: 0,
+                maxzoom: 20
+            }, {
+                id: 'google-hybrid',
+                type: 'raster',
+                source: 'google-hybrid',
+                layout: { visibility: 'none' },
+                minzoom: 0,
+                maxzoom: 21
+            }, {
+                id: 'openstreetmap',
+                type: 'raster',
+                source: 'openstreetmap',
+                layout: { visibility: 'none' },
+                minzoom: 0,
+                maxzoom: 19
+            }, {
+                id: 'eox-s2cloudless-2024',
+                type: 'raster',
+                source: 'eox-s2cloudless-2024',
+                layout: { visibility: 'none' },
+                minzoom: 0,
+                maxzoom: 21
+            }, {
+                id: 'eox-hydrography',
+                type: 'raster',
+                source: 'eox-hydrography',
+                minzoom: 0,
+                maxzoom: 20
+            }]
+        };
+
+        const URL_ESTILO_NARWASSCO = 'https://narwassco.github.io/mapbox-stylefiles/unvt/style.json';
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: { ...estiloBaseLocal,
+            version: 8,
+            sources: {
+                /* ==============================================
+                   ESRI SATÉLITE
+                   ============================================== */
+                'esri-world-imagery': {
+                    type: 'raster',
+                    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                    tileSize: 256,
+                    attribution: '&copy; Esri World Imagery'
+                },
+                'google-relieve': {
+                    type: 'raster',
+                    tiles: ['https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'],
+                    tileSize: 256,
+                    attribution: '&copy; Google'
+                },
+                'google-hybrid': {
+                    type: 'raster',
+                    tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+                    tileSize: 256,
+                    attribution: '&copy; Google'
+                },
+                'openstreetmap': {
+                    type: 'raster',
+                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    attribution: '&copy; OpenStreetMap contributors'
+                },
+                'eox-s2cloudless-2024': {
+                    type: 'raster',
+                    tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=s2cloudless-2024_3857&styles=default&format=image/jpeg&transparent=false&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256'],
+                    tileSize: 256,
+                    attribution: '&copy; EOX Sentinel-2 cloudless 2024'
+                },
+                'eox-hydrography': {
+                    type: 'raster',
+                    tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=hydrography&styles=&format=image/png&transparent=true&srs=EPSG:4326&bbox={bbox-epsg-4326}&width=256&height=256'],
+                    tileSize: 256,
+                    attribution: '&copy; EOX'
+                }
+            },
+            layers: [{
+                id: 'esri-world-imagery',
+                type: 'raster',
+                source: 'esri-world-imagery',
+                minzoom: 0,
+                maxzoom: 19
+            }, {
+                id: 'google-relieve',
+                type: 'raster',
+                source: 'google-relieve',
+                layout: {
+                    visibility: 'none'
+                },
+                minzoom: 0,
+                maxzoom: 20
+            }, {
+                id: 'google-hybrid',
+                type: 'raster',
+                source: 'google-hybrid',
+                layout: {
+                    visibility: 'none'
+                },
+                minzoom: 0,
+                maxzoom: 21
+            }, {
+                id: 'openstreetmap',
+                type: 'raster',
+                source: 'openstreetmap',
+                layout: {
+                    visibility: 'none'
+                },
+                minzoom: 0,
+                maxzoom: 19
+            }, {
+                id: 'eox-s2cloudless-2024',
+                type: 'raster',
+                source: 'eox-s2cloudless-2024',
+                layout: {
+                    visibility: 'none'
+                },
+                minzoom: 0,
+                maxzoom: 21
+            }, {
+                id: 'eox-hydrography',
+                type: 'raster',
+                source: 'eox-hydrography',
+                minzoom: 0,
+                maxzoom: 20
+            }]
+        },
+            center: [35.8599, -0.9813], // Coordenadas de Lima - Ayacucho
+            zoom: 16
+        });
+
+        let marcadorSeleccionado;
+
+
+        map.on('load', () => {
+
+            document.querySelectorAll('input[name="mapa-base"]').forEach((control) => {
+                control.addEventListener('change', (event) => {
+                    const mapaBaseSeleccionado = event.target.value;
+
+                    if (mapaBaseSeleccionado === 'narwassco-unvt') {
+                        map.setStyle(URL_ESTILO_NARWASSCO);
+                        return;
+                    }
+
+                    if (!map.getLayer('esri-world-imagery')) {
+                        map.setStyle(estiloBaseLocal);
+                        return;
+                    }
+
+                    ['esri-world-imagery', 'google-relieve', 'google-hybrid', 'openstreetmap', 'eox-s2cloudless-2024'].forEach((id) => {
+                        map.setLayoutProperty(
+                            id,
+                            'visibility',
+                            id === mapaBaseSeleccionado ? 'visible' : 'none'
+                        );
+                    });
+                });
+            });
+
+            document.getElementById('chk-hydrography').addEventListener('change', (event) => {
+                map.setLayoutProperty(
+                    'eox-hydrography',
+                    'visibility',
+                    event.target.checked ? 'visible' : 'none'
+                );
+            });
+
+            document.getElementById('chk-distritos-huamanga').addEventListener('change', (event) => {
+                const visibility = event.target.checked ? 'visible' : 'none';
+
+                map.setLayoutProperty('distritos-huamanga-fill', 'visibility', visibility);
+                map.setLayoutProperty('distritos-huamanga-hover-fill', 'visibility', visibility);
+                map.setLayoutProperty('distritos-huamanga-outline', 'visibility', visibility);
+                map.setLayoutProperty('distritos-huamanga-labels', 'visibility', visibility);
+            });
+
+
+
+
+
+            map.addSource('distritos-huamanga', {
+                'type': 'geojson',
+                'data': 'data/DistritoHuamanga.geojson',
+                'generateId': true
+            });
+
+            map.addLayer({
+                'id': 'distritos-huamanga-fill',
+                'type': 'fill',
+                'source': 'distritos-huamanga',
+                'paint': {
+                    'fill-color': [
+                        'case',
+                        ['boolean', ['feature-state', 'hover'], false],
+                        'red',
+                        'yellow'
+                    ],
+                    'fill-opacity': 0.35
+                }
+            });
+
+            map.addLayer({
+                'id': 'distritos-huamanga-hover-fill',
+                'type': 'fill',
+                'source': 'distritos-huamanga',
+                'filter': ['==', ['id'], '__sin-distrito-hover__'],
+                'paint': {
+                    'fill-color': 'blue',
+                    'fill-opacity': 0.65
+                }
+            });
+
+            map.addLayer({
+                'id': 'distritos-huamanga-outline',
+                'type': 'line',
+                'source': 'distritos-huamanga',
+                'paint': {
+                    'line-color': 'red',
+                    'line-width': 2
+                }
+            });
+
+            map.addLayer({
+                'id': 'distritos-huamanga-labels',
+                'type': 'symbol',
+                'source': 'distritos-huamanga',
+                'layout': {
+                    'symbol-placement': 'point',
+                    'text-field': ['get', 'DISTRITO'],
+                    'text-size': 12,
+                    'text-allow-overlap': false
+                },
+                'paint': {
+                    'text-color': '#8b0000',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 1.5
+                }
+            });
+
+            let distritoHoveredId = null;
+
+            const limpiarDistritoHover = () => {
+                if (distritoHoveredId === null) {
+                    return;
+                }
+
+                map.setFeatureState(
+                    { source: 'distritos-huamanga', id: distritoHoveredId },
+                    { hover: false }
+                );
+                distritoHoveredId = null;
+            };
+
+            const mostrarPropiedadesDistrito = (properties) => {
+                const cuerpo = document.getElementById('propiedades-distrito-body');
+                cuerpo.replaceChildren();
+
+                Object.entries(properties).forEach(([nombre, valor]) => {
+                    const fila = document.createElement('tr');
+                    const nombreCelda = document.createElement('th');
+                    const valorCelda = document.createElement('td');
+
+                    nombreCelda.textContent = nombre;
+                    valorCelda.textContent = valor ?? '';
+                    fila.append(nombreCelda, valorCelda);
+                    cuerpo.appendChild(fila);
+                });
+            };
+
+            map.on('mousemove', 'distritos-huamanga-fill', (event) => {
+                map.getCanvas().style.cursor = 'pointer';
+
+                const distrito = event.features?.[0];
+
+                if (!distrito) {
+                    return;
+                }
+
+                if (distritoHoveredId !== distrito.id) {
+                    limpiarDistritoHover();
+                    distritoHoveredId = distrito.id;
+                    map.setFilter('distritos-huamanga-hover-fill', [
+                        '==',
+                        ['id'],
+                        distritoHoveredId
+                    ]);
+                    map.setFeatureState(
+                        { source: 'distritos-huamanga', id: distritoHoveredId },
+                        { hover: true }
+                    );
+                }
+
+                mostrarPropiedadesDistrito(distrito.properties || {});
+            });
+
+            map.on('mouseleave', 'distritos-huamanga-fill', () => {
+                map.getCanvas().style.cursor = '';
+                limpiarDistritoHover();
+                map.setFilter('distritos-huamanga-hover-fill', [
+                    '==',
+                    ['id'],
+                    '__sin-distrito-hover__'
+                ]);
+
+                document.getElementById('propiedades-distrito-body').innerHTML =
+                    '<tr><td colspan="2">Pasa el mouse sobre un distrito.</td></tr>';
+            });
+
+
+
+
+
+
+        });
+
+        document.getElementById('fly-to').addEventListener('click', () => {
+            map.flyTo({
+                center: [-74.223, -13.155], // Coordenadas de Lima - Ayacucho
+                zoom: 10, // Nivel de zoom deseado
+                speed: 1.2, // Velocidad del vuelo (opcional)
+                curve: 1.5, // Curvatura del vuelo (opcional)
+                easing: (t) => t, // Función de easing (opcional)
+            });
+        });
+
+        document.querySelectorAll('.distrito-item').forEach((distrito) => {
+            distrito.addEventListener('click', () => {
+                const centro = [
+                    Number(distrito.dataset.lng),
+                    Number(distrito.dataset.lat)
+                ];
+
+                document.querySelectorAll('.distrito-item').forEach((item) => {
+                    item.classList.remove('activo');
+                });
+                distrito.classList.add('activo');
+
+                map.flyTo({
+                    center: centro,
+                    zoom: 15.5,
+                    speed: 1.5,
+                    curve: 1.5
+                });
+            });
+        });
+
+        /*  map.on('click', (event) => {
+              const longitud = event.lngLat.lng.toFixed(6);
+              const latitud = event.lngLat.lat.toFixed(6);
+              const popup = new maplibregl.Popup({
+                  offset: 25
+              }).setHTML(`<strong>Coordenadas</strong><br>Latitud: ${latitud}<br>Longitud: ${longitud}`);
+  
+              if (marcadorSeleccionado) {
+                  marcadorSeleccionado.remove();
+              }
+  
+              marcadorSeleccionado = new maplibregl.Marker()
+                  .setLngLat(event.lngLat)
+                  .setPopup(popup)
+                  .addTo(map);
+  
+              marcadorSeleccionado.togglePopup();
+  
+              alert(`Latitud: ${latitud}\nLongitud: ${longitud}`);
+          });
+  */
+    </script>
+</body>
+
+</html>
