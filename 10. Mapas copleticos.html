@@ -343,35 +343,14 @@
                 const visibility = event.target.checked ? 'visible' : 'none';
 
                 map.setLayoutProperty('distritos-huamanga-fill', 'visibility', visibility);
+                map.setLayoutProperty('distritos-huamanga-hover-fill', 'visibility', visibility);
                 map.setLayoutProperty('distritos-huamanga-outline', 'visibility', visibility);
                 map.setLayoutProperty('distritos-huamanga-labels', 'visibility', visibility);
             });
 
 
 
-            map.addSource('sectores', {
-                'type': 'geojson',
-                'data': 'data/sectores.geojson'
-            });
 
-            map.addLayer({
-                'id': 'sectores-fill',
-                'type': 'fill',
-                'source': 'sectores',
-                'paint': {
-                    'fill-color': 'red',
-                    'fill-opacity': 0.35
-                }
-            });
-            map.addLayer({
-                'id': 'sectores-outline',
-                'type': 'line',
-                'source': 'sectores',
-                'paint': {
-                    'line-color': 'blue',
-                    'line-width': 5
-                }
-            });
 
             map.addSource('distritos-huamanga', {
                 'type': 'geojson',
@@ -387,10 +366,21 @@
                     'fill-color': [
                         'case',
                         ['boolean', ['feature-state', 'hover'], false],
-                        '#ffff00',
+                        'red',
                         'yellow'
                     ],
                     'fill-opacity': 0.35
+                }
+            });
+
+            map.addLayer({
+                'id': 'distritos-huamanga-hover-fill',
+                'type': 'fill',
+                'source': 'distritos-huamanga',
+                'filter': ['==', ['id'], '__sin-distrito-hover__'],
+                'paint': {
+                    'fill-color': 'blue',
+                    'fill-opacity': 0.65
                 }
             });
 
@@ -463,6 +453,11 @@
                 if (distritoHoveredId !== distrito.id) {
                     limpiarDistritoHover();
                     distritoHoveredId = distrito.id;
+                    map.setFilter('distritos-huamanga-hover-fill', [
+                        '==',
+                        ['id'],
+                        distritoHoveredId
+                    ]);
                     map.setFeatureState(
                         { source: 'distritos-huamanga', id: distritoHoveredId },
                         { hover: true }
@@ -475,35 +470,18 @@
             map.on('mouseleave', 'distritos-huamanga-fill', () => {
                 map.getCanvas().style.cursor = '';
                 limpiarDistritoHover();
+                map.setFilter('distritos-huamanga-hover-fill', [
+                    '==',
+                    ['id'],
+                    '__sin-distrito-hover__'
+                ]);
 
                 document.getElementById('propiedades-distrito-body').innerHTML =
                     '<tr><td colspan="2">Pasa el mouse sobre un distrito.</td></tr>';
             });
 
 
-            map.addSource('conseciones', {
-                'type': 'geojson',
-                'data': 'http://3.233.4.153:8080/geoserver/ddp/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=ddp%3Ageo_anp_concesion&maxFeatures=50&outputFormat=application%2Fjson'
-            });
 
-            map.addLayer({
-                'id': 'conseciones-fill',
-                'type': 'fill',
-                'source': 'conseciones',
-                'paint': {
-                    'fill-color': 'green',
-                    'fill-opacity': 1
-                }
-            });
-            map.addLayer({
-                'id': 'conseciones-outline',
-                'type': 'line',
-                'source': 'conseciones',
-                'paint': {
-                    'line-color': 'blue',
-                    'line-width': 6
-                }
-            });
 
 
 
@@ -540,27 +518,27 @@
             });
         });
 
-        map.on('click', (event) => {
-            const longitud = event.lngLat.lng.toFixed(6);
-            const latitud = event.lngLat.lat.toFixed(6);
-            const popup = new maplibregl.Popup({
-                offset: 25
-            }).setHTML(`<strong>Coordenadas</strong><br>Latitud: ${latitud}<br>Longitud: ${longitud}`);
-
-            if (marcadorSeleccionado) {
-                marcadorSeleccionado.remove();
-            }
-
-            marcadorSeleccionado = new maplibregl.Marker()
-                .setLngLat(event.lngLat)
-                .setPopup(popup)
-                .addTo(map);
-
-            marcadorSeleccionado.togglePopup();
-
-            alert(`Latitud: ${latitud}\nLongitud: ${longitud}`);
-        });
-
+        /*  map.on('click', (event) => {
+              const longitud = event.lngLat.lng.toFixed(6);
+              const latitud = event.lngLat.lat.toFixed(6);
+              const popup = new maplibregl.Popup({
+                  offset: 25
+              }).setHTML(`<strong>Coordenadas</strong><br>Latitud: ${latitud}<br>Longitud: ${longitud}`);
+  
+              if (marcadorSeleccionado) {
+                  marcadorSeleccionado.remove();
+              }
+  
+              marcadorSeleccionado = new maplibregl.Marker()
+                  .setLngLat(event.lngLat)
+                  .setPopup(popup)
+                  .addTo(map);
+  
+              marcadorSeleccionado.togglePopup();
+  
+              alert(`Latitud: ${latitud}\nLongitud: ${longitud}`);
+          });
+  */
     </script>
 </body>
 
