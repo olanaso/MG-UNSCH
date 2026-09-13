@@ -50,11 +50,83 @@
             margin: 6px 0;
             cursor: pointer;
         }
+
+        #sidebar-distritos {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            width: 250px;
+            height: 100%;
+            padding: 18px 14px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.25);
+            font-family: Arial, sans-serif;
+        }
+
+        #sidebar-distritos h2 {
+            margin: 0 0 6px;
+            font-size: 20px;
+        }
+
+        #sidebar-distritos p {
+            margin: 0 0 14px;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .distrito-item {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 9px 10px;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            background: #fff;
+            color: #222;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .distrito-item:hover,
+        .distrito-item.activo {
+            border-color: #1976d2;
+            background: #e8f1fb;
+        }
+
+        @media (max-width: 600px) {
+            #sidebar-distritos {
+                width: 210px;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <button id="fly-to">Fly to Lima - Ayacucho </button>
     <div id="map"></div>
+    <aside id="sidebar-distritos">
+        <h2>Distritos de Huamanga</h2>
+        <p>Selecciona un distrito para ir a su ubicación.</p>
+        <button class="distrito-item" data-lng="-74.223" data-lat="-13.155">Ayacucho</button>
+        <button class="distrito-item" data-lng="-74.033" data-lat="-13.218">Acocro</button>
+        <button class="distrito-item" data-lng="-74.094" data-lat="-13.047">Acos Vinchos</button>
+        <button class="distrito-item" data-lng="-74.214" data-lat="-13.175">Andres Avelino Caceres Dorregaray</button>
+        <button class="distrito-item" data-lng="-74.2220" data-lat="-13.1844">Carmen Alto</button>
+        <button class="distrito-item" data-lng="-74.305" data-lat="-13.392">Chiara</button>
+        <button class="distrito-item" data-lng="-74.407" data-lat="-13.213">Jesus Nazareno</button>
+        <button class="distrito-item" data-lng="-74.092" data-lat="-13.193">Ocros</button>
+        <button class="distrito-item" data-lng="-74.211" data-lat="-13.050">Pacaycasa</button>
+        <button class="distrito-item" data-lng="-74.140" data-lat="-13.046">Quinua</button>
+        <button class="distrito-item" data-lng="-74.365" data-lat="-13.107">San Jose de Ticllas</button>
+        <button class="distrito-item" data-lng="-74.220" data-lat="-13.164">San Juan Bautista</button>
+        <button class="distrito-item" data-lng="-74.320" data-lat="-13.080">Santiago de Pischa</button>
+        <button class="distrito-item" data-lng="-74.292" data-lat="-13.213">Socos</button>
+        <button class="distrito-item" data-lng="-74.107" data-lat="-13.202">Tambillo</button>
+        <button class="distrito-item" data-lng="-74.353" data-lat="-13.307">Vinchos</button>
+    </aside>
     <div id="panel-mapas-base">
         <strong>Mapas base</strong>
         <label>
@@ -82,6 +154,10 @@
         <label>
             <input type="checkbox" id="chk-hydrography" checked>
             Hydrography overlay layer by EOX - 4326
+        </label>
+        <label>
+            <input type="checkbox" id="chk-distritos-huamanga" checked>
+            Distritos de Huamanga
         </label>
     </div>
     <script type="module">
@@ -182,32 +258,12 @@
                     maxzoom: 20
                 }]
             },
-            center: [-76.324, -13.168],
+            center: [-74.223, -13.155], // Coordenadas de Lima - Ayacucho
             zoom: 14
         });
 
         let marcadorSeleccionado;
 
-        map.on('click', (event) => {
-            const longitud = event.lngLat.lng.toFixed(6);
-            const latitud = event.lngLat.lat.toFixed(6);
-            const popup = new maplibregl.Popup({
-                offset: 25
-            }).setHTML(`<strong>Coordenadas</strong><br>Latitud: ${latitud}<br>Longitud: ${longitud}`);
-
-            if (marcadorSeleccionado) {
-                marcadorSeleccionado.remove();
-            }
-
-            marcadorSeleccionado = new maplibregl.Marker()
-                .setLngLat(event.lngLat)
-                .setPopup(popup)
-                .addTo(map);
-
-            marcadorSeleccionado.togglePopup();
-
-            alert(`Latitud: ${latitud}\nLongitud: ${longitud}`);
-        });
 
         map.on('load', () => {
 
@@ -233,6 +289,14 @@
                 );
             });
 
+            document.getElementById('chk-distritos-huamanga').addEventListener('change', (event) => {
+                const visibility = event.target.checked ? 'visible' : 'none';
+
+                map.setLayoutProperty('distritos-huamanga-fill', 'visibility', visibility);
+                map.setLayoutProperty('distritos-huamanga-outline', 'visibility', visibility);
+                map.setLayoutProperty('distritos-huamanga-labels', 'visibility', visibility);
+            });
+
 
 
             map.addSource('sectores', {
@@ -256,6 +320,48 @@
                 'paint': {
                     'line-color': 'blue',
                     'line-width': 5
+                }
+            });
+
+            map.addSource('distritos-huamanga', {
+                'type': 'geojson',
+                'data': 'data/DistritoHuamanga.geojson'
+            });
+
+            map.addLayer({
+                'id': 'distritos-huamanga-fill',
+                'type': 'fill',
+                'source': 'distritos-huamanga',
+                'paint': {
+                    'fill-color': 'yellow',
+                    'fill-opacity': 0.35
+                }
+            });
+
+            map.addLayer({
+                'id': 'distritos-huamanga-outline',
+                'type': 'line',
+                'source': 'distritos-huamanga',
+                'paint': {
+                    'line-color': 'red',
+                    'line-width': 2
+                }
+            });
+
+            map.addLayer({
+                'id': 'distritos-huamanga-labels',
+                'type': 'symbol',
+                'source': 'distritos-huamanga',
+                'layout': {
+                    'symbol-placement': 'point',
+                    'text-field': ['get', 'DISTRITO'],
+                    'text-size': 12,
+                    'text-allow-overlap': false
+                },
+                'paint': {
+                    'text-color': '#8b0000',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 1.5
                 }
             });
 
@@ -288,7 +394,57 @@
 
         });
 
+        document.getElementById('fly-to').addEventListener('click', () => {
+            map.flyTo({
+                center: [-74.223, -13.155], // Coordenadas de Lima - Ayacucho
+                zoom: 10, // Nivel de zoom deseado
+                speed: 1.2, // Velocidad del vuelo (opcional)
+                curve: 1.5, // Curvatura del vuelo (opcional)
+                easing: (t) => t, // Función de easing (opcional)
+            });
+        });
 
+        document.querySelectorAll('.distrito-item').forEach((distrito) => {
+            distrito.addEventListener('click', () => {
+                const centro = [
+                    Number(distrito.dataset.lng),
+                    Number(distrito.dataset.lat)
+                ];
+
+                document.querySelectorAll('.distrito-item').forEach((item) => {
+                    item.classList.remove('activo');
+                });
+                distrito.classList.add('activo');
+
+                map.flyTo({
+                    center: centro,
+                    zoom: 15.5,
+                    speed: 1.5,
+                    curve: 1.5
+                });
+            });
+        });
+
+        map.on('click', (event) => {
+            const longitud = event.lngLat.lng.toFixed(6);
+            const latitud = event.lngLat.lat.toFixed(6);
+            const popup = new maplibregl.Popup({
+                offset: 25
+            }).setHTML(`<strong>Coordenadas</strong><br>Latitud: ${latitud}<br>Longitud: ${longitud}`);
+
+            if (marcadorSeleccionado) {
+                marcadorSeleccionado.remove();
+            }
+
+            marcadorSeleccionado = new maplibregl.Marker()
+                .setLngLat(event.lngLat)
+                .setPopup(popup)
+                .addTo(map);
+
+            marcadorSeleccionado.togglePopup();
+
+            alert(`Latitud: ${latitud}\nLongitud: ${longitud}`);
+        });
 
     </script>
 </body>
