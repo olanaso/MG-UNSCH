@@ -58,22 +58,38 @@
             container: "before",
             style:
                 "https://api.maptiler.com/maps/hybrid/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL",
-            center: [7.221275, 50.326111],
+            center: [-74.2238792,
+            -13.1475099],
             zoom: 15,
         });
 
         var afterMap = new maplibregl.Map({
             container: "after",
-            style:
-                "https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL",
-            center: [7.221275, 50.326111],
+            style: {
+                version: 8,
+                sources: {
+                    'google-hybrid': {
+                        type: 'raster',
+                        tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+                        tileSize: 256,
+                        attribution: '&copy; Google'
+                    }
+                },
+                layers: [{
+                    id: 'google-hybrid',
+                    type: 'raster',
+                    source: 'google-hybrid'
+                }]
+            },
+            center: [-74.2238792,
+            -13.1475099],
             zoom: 15,
         });
 
         // A selector or reference to HTML element
         var container = "#comparison-container";
 
-        var map = new maplibregl.Compare(beforeMap, afterMap, container, {
+        var map = new maplibregl.Compare(afterMap, beforeMap, container, {
             // Set this to enable comparing two maps by mouse movement:
             // m ousemove: true
         });
