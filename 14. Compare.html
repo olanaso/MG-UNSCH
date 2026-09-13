@@ -1,70 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-    <title>Display a map</title>
-    <meta property="og:description" content="Initialize a map in an HTML element with MapLibre GL JS." />
-    <meta property="og:category" content="Getting Started" />
-    <meta property="og:order" content="1" />
-    <meta property="og:created" content="2025-06-25" />
-    <meta charset='utf-8'>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css' />
-
+    <meta charset="utf-8" />
+    <title>Swipe between maps</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="../.env"></script>
+    <script src="https://unpkg.com/maplibre-gl@2.1.6/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.1.6/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
         body {
             margin: 0;
             padding: 0;
         }
 
-        html,
-        body,
         #map {
-            height: 100%;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
         }
     </style>
 </head>
 
 <body>
-    <div id="map"></div>
-    <script type="module">
-        import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.mjs';
-
-        class CustomLogoControl {
-            onAdd (map) {
-                this._map = map;
-                this._container = document.createElement('div');
-                // Usa la clase de controles de maplibre para que herede los márgenes correctos
-                this._container.className = 'maplibregl-ctrl';
-
-                // Inserta tu logo personalizado aquí (reemplaza la URL)
-                this._container.innerHTML = `
-            <a href="https://tu-sitio-web.com" target="_blank" rel="noopener nofollow">
-                <img src="https://posgrado.unsch.edu.pe/wp-content/uploads/2025/08/cropped-logo-posgrado.jpg" 
-                     alt="Mi Logo" 
-                     style="height: 80px; cursor: pointer; padding: 5px;">
-            </a>
-        `;
-                return this._container;
-            }
-
-            onRemove () {
-                this._container.parentNode.removeChild(this._container);
-                this._map = undefined;
-            }
+    <style>
+        body {
+            overflow: hidden;
         }
 
-        const map = new maplibregl.Map({
-            container: 'map', // container id
-            style: 'https://demotiles.maplibre.org/style.json', // style URL
-            center: [0, 0], // starting position [lng, lat]
-            zoom: 1, // starting zoom
-            maplibreLogo: false
+        body * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+    <script
+        src="https://rawcdn.githack.com/astridx/astridx.github.io/a9d7297a4fe1e3a4d7ebeb1e4e662fd1339ef3b5/maplibreexamples/plugins/maplibre-gl-compare.js"></script>
+    <link rel="stylesheet"
+        href="https://rawcdn.githack.com/astridx/astridx.github.io/a9d7297a4fe1e3a4d7ebeb1e4e662fd1339ef3b5/maplibreexamples/plugins/maplibre-gl-compare.css"
+        type="text/css" />
+    <div id="comparison-container">
+        <div id="before" class="map"></div>
+        <div id="after" class="map"></div>
+    </div>
+    <script>
+        var beforeMap = new maplibregl.Map({
+            container: "before",
+            style:
+                "https://api.maptiler.com/maps/hybrid/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL",
+            center: [7.221275, 50.326111],
+            zoom: 15,
         });
 
-        // 3. Añadir tu logo personalizado al mapa 
-        // Puedes elegir la posición: 'bottom-left', 'bottom-right', 'top-left', 'top-right'
-        map.addControl(new CustomLogoControl(), 'bottom-left');
+        var afterMap = new maplibregl.Map({
+            container: "after",
+            style:
+                "https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL",
+            center: [7.221275, 50.326111],
+            zoom: 15,
+        });
+
+        // A selector or reference to HTML element
+        var container = "#comparison-container";
+
+        var map = new maplibregl.Compare(beforeMap, afterMap, container, {
+            // Set this to enable comparing two maps by mouse movement:
+            // m ousemove: true
+        });
     </script>
 </body>
 
