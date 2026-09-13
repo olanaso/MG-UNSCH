@@ -307,99 +307,100 @@
 
         const map = new maplibregl.Map({
             container: 'map',
-            style: { ...estiloBaseLocal,
-            version: 8,
-            sources: {
-                /* ==============================================
-                   ESRI SATÉLITE
-                   ============================================== */
-                'esri-world-imagery': {
-                    type: 'raster',
-                    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-                    tileSize: 256,
-                    attribution: '&copy; Esri World Imagery'
+            style: {
+                ...estiloBaseLocal,
+                version: 8,
+                sources: {
+                    /* ==============================================
+                       ESRI SATÉLITE
+                       ============================================== */
+                    'esri-world-imagery': {
+                        type: 'raster',
+                        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                        tileSize: 256,
+                        attribution: '&copy; Esri World Imagery'
+                    },
+                    'google-relieve': {
+                        type: 'raster',
+                        tiles: ['https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'],
+                        tileSize: 256,
+                        attribution: '&copy; Google'
+                    },
+                    'google-hybrid': {
+                        type: 'raster',
+                        tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+                        tileSize: 256,
+                        attribution: '&copy; Google'
+                    },
+                    'openstreetmap': {
+                        type: 'raster',
+                        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                        tileSize: 256,
+                        attribution: '&copy; OpenStreetMap contributors'
+                    },
+                    'eox-s2cloudless-2024': {
+                        type: 'raster',
+                        tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=s2cloudless-2024_3857&styles=default&format=image/jpeg&transparent=false&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256'],
+                        tileSize: 256,
+                        attribution: '&copy; EOX Sentinel-2 cloudless 2024'
+                    },
+                    'eox-hydrography': {
+                        type: 'raster',
+                        tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=hydrography&styles=&format=image/png&transparent=true&srs=EPSG:4326&bbox={bbox-epsg-4326}&width=256&height=256'],
+                        tileSize: 256,
+                        attribution: '&copy; EOX'
+                    }
                 },
-                'google-relieve': {
+                layers: [{
+                    id: 'esri-world-imagery',
                     type: 'raster',
-                    tiles: ['https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'],
-                    tileSize: 256,
-                    attribution: '&copy; Google'
-                },
-                'google-hybrid': {
+                    source: 'esri-world-imagery',
+                    minzoom: 0,
+                    maxzoom: 19
+                }, {
+                    id: 'google-relieve',
                     type: 'raster',
-                    tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
-                    tileSize: 256,
-                    attribution: '&copy; Google'
-                },
-                'openstreetmap': {
+                    source: 'google-relieve',
+                    layout: {
+                        visibility: 'none'
+                    },
+                    minzoom: 0,
+                    maxzoom: 20
+                }, {
+                    id: 'google-hybrid',
                     type: 'raster',
-                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                    tileSize: 256,
-                    attribution: '&copy; OpenStreetMap contributors'
-                },
-                'eox-s2cloudless-2024': {
+                    source: 'google-hybrid',
+                    layout: {
+                        visibility: 'none'
+                    },
+                    minzoom: 0,
+                    maxzoom: 21
+                }, {
+                    id: 'openstreetmap',
                     type: 'raster',
-                    tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=s2cloudless-2024_3857&styles=default&format=image/jpeg&transparent=false&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256'],
-                    tileSize: 256,
-                    attribution: '&copy; EOX Sentinel-2 cloudless 2024'
-                },
-                'eox-hydrography': {
+                    source: 'openstreetmap',
+                    layout: {
+                        visibility: 'none'
+                    },
+                    minzoom: 0,
+                    maxzoom: 19
+                }, {
+                    id: 'eox-s2cloudless-2024',
                     type: 'raster',
-                    tiles: ['https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap&layers=hydrography&styles=&format=image/png&transparent=true&srs=EPSG:4326&bbox={bbox-epsg-4326}&width=256&height=256'],
-                    tileSize: 256,
-                    attribution: '&copy; EOX'
-                }
+                    source: 'eox-s2cloudless-2024',
+                    layout: {
+                        visibility: 'none'
+                    },
+                    minzoom: 0,
+                    maxzoom: 21
+                }, {
+                    id: 'eox-hydrography',
+                    type: 'raster',
+                    source: 'eox-hydrography',
+                    minzoom: 0,
+                    maxzoom: 20
+                }]
             },
-            layers: [{
-                id: 'esri-world-imagery',
-                type: 'raster',
-                source: 'esri-world-imagery',
-                minzoom: 0,
-                maxzoom: 19
-            }, {
-                id: 'google-relieve',
-                type: 'raster',
-                source: 'google-relieve',
-                layout: {
-                    visibility: 'none'
-                },
-                minzoom: 0,
-                maxzoom: 20
-            }, {
-                id: 'google-hybrid',
-                type: 'raster',
-                source: 'google-hybrid',
-                layout: {
-                    visibility: 'none'
-                },
-                minzoom: 0,
-                maxzoom: 21
-            }, {
-                id: 'openstreetmap',
-                type: 'raster',
-                source: 'openstreetmap',
-                layout: {
-                    visibility: 'none'
-                },
-                minzoom: 0,
-                maxzoom: 19
-            }, {
-                id: 'eox-s2cloudless-2024',
-                type: 'raster',
-                source: 'eox-s2cloudless-2024',
-                layout: {
-                    visibility: 'none'
-                },
-                minzoom: 0,
-                maxzoom: 21
-            }, {
-                id: 'eox-hydrography',
-                type: 'raster',
-                source: 'eox-hydrography',
-                minzoom: 0,
-                maxzoom: 20
-            }]
-        },
             center: [35.8599, -0.9813], // Coordenadas de Lima - Ayacucho
             zoom: 16
         });
