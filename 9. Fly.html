@@ -50,42 +50,11 @@
             margin: 6px 0;
             cursor: pointer;
         }
-
-        #control-busqueda {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 2;
-            display: flex;
-            gap: 4px;
-            padding: 6px;
-            background: #fff;
-            border-radius: 4px;
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
-        }
-
-        #control-busqueda input {
-            width: 220px;
-            padding: 6px;
-            border: 1px solid #bbb;
-        }
-
-        #control-busqueda button {
-            padding: 6px 10px;
-            border: 0;
-            background: #1976d2;
-            color: #fff;
-            cursor: pointer;
-        }
     </style>
 </head>
 
 <body>
     <div id="map"></div>
-    <form id="control-busqueda">
-        <input id="entrada-busqueda" type="search" placeholder="Buscar lugar..." aria-label="Buscar lugar">
-        <button type="submit">Buscar</button>
-    </form>
     <div id="panel-mapas-base">
         <strong>Mapas base</strong>
         <label>
@@ -217,68 +186,7 @@
             zoom: 14
         });
 
-        map.addControl(new maplibregl.NavigationControl(), 'top-left');
-
-        map.addControl(new maplibregl.ScaleControl({
-            unit: 'metric'
-        }));
-
-        map.addControl(
-            new maplibregl.FullscreenControl(), 'top-left');
-
-        map.addControl(
-            new maplibregl.GeolocateControl({
-                positionOptions: {
-                    enableHighAccuracy: true
-                },
-                trackUserLocation: true,
-                showUserHeading: true
-            }),
-            'top-left'
-        );
-
-
         let marcadorSeleccionado;
-
-        document.getElementById('control-busqueda').addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const consulta = document.getElementById('entrada-busqueda').value.trim();
-
-            if (!consulta) {
-                return;
-            }
-
-            const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(consulta)}`;
-            const respuesta = await fetch(url);
-            const resultados = await respuesta.json();
-
-            if (!resultados.length) {
-                alert('No se encontró el lugar buscado.');
-                return;
-            }
-
-            const resultado = resultados[0];
-            const coordenadas = [Number(resultado.lon), Number(resultado.lat)];
-            const popup = new maplibregl.Popup({
-                offset: 25
-            }).setHTML(`<strong>${resultado.display_name}</strong>`);
-
-            if (marcadorSeleccionado) {
-                marcadorSeleccionado.remove();
-            }
-
-            marcadorSeleccionado = new maplibregl.Marker()
-                .setLngLat(coordenadas)
-                .setPopup(popup)
-                .addTo(map);
-
-            map.flyTo({
-                center: coordenadas,
-                zoom: 15
-            });
-            marcadorSeleccionado.togglePopup();
-        });
 
         map.on('click', (event) => {
             const longitud = event.lngLat.lng.toFixed(6);
@@ -379,10 +287,6 @@
 
 
         });
-
-
-
-
 
 
 
