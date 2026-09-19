@@ -1,0 +1,14 @@
+{
+  "name": "api-ejemplo",
+  "version": "1.0.0",
+  "description": "ejemplo creacion de api con express",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
