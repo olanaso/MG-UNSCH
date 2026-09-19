@@ -5,12 +5,17 @@
 // Correr el servidor con "node index.js"
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express()
 const port = 3000
 
 const db = new Pool({ connectionString: process.env.DATABASE_URL })
+
+app.use(cors({
+  origin: '*'
+}))
 
 console.log('DATABASE_URL:', process.env.DATABASE_URL);
 
@@ -19,12 +24,56 @@ app.get('/', (req, res) => {
 })
 
 
-app.get('/api/v1/manzanas',async (req, res) => {
+app.get('/api/v1/manzanas', async (req, res) => {
 
-  const filas= await db.query (
-    `SELECT id,  ST_AsGeoJSON(geom)::json AS geom, qgs_fid, objectid, secuencial, idproyecto, proyecto, sector, idinmueble, manzana, lote, inmueble, grupo, terreno, zonificaci, descripcio, ubicacion, metrajefin, estadoinmu, idestado, estadoplan, bb, falta, proyectoid, aa, shape_leng, shape_area
-	FROM public.area_comercial; `
-	)
+  const filas = await db.query(
+    `
+SELECT json_build_object(
+    'type', 'FeatureCollection',
+    'features',
+    json_agg(
+        json_build_object(
+            'type', 'Feature',
+
+            'geometry',
+            ST_AsGeoJSON(geom)::json,
+
+            'properties',
+            json_build_object(
+                'id', id,
+                'qgs_fid', qgs_fid,
+                'objectid', objectid,
+                'secuencial', secuencial,
+                'idproyecto', idproyecto,
+                'proyecto', proyecto,
+                'sector', sector,
+                'idinmueble', idinmueble,
+                'manzana', manzana,
+                'lote', lote,
+                'inmueble', inmueble,
+                'grupo', grupo,
+                'terreno', terreno,
+                'zonificaci', zonificaci,
+                'descripcio', descripcio,
+                'ubicacion', ubicacion,
+                'metrajefin', metrajefin,
+                'estadoinmu', estadoinmu,
+                'idestado', idestado,
+                'estadoplan', estadoplan,
+                'bb', bb,
+                'falta', falta,
+                'proyectoid', proyectoid,
+                'aa', aa,
+                'shape_leng', shape_leng,
+                'shape_area', shape_area
+            )
+        )
+    )
+) AS geojson
+FROM public.area_comercial;
+
+     `
+  )
 
   res.json(filas)
 
