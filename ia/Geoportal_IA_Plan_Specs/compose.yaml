@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgis/postgis:16-3.5
+    environment:
+      POSTGRES_DB: geoportal
+      POSTGRES_USER: geoportal
+      POSTGRES_PASSWORD: geoportal_clase_2026
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - geoportal_pgdata:/var/lib/postgresql/data
+      - ./db/init/001_schema.sql:/docker-entrypoint-initdb.d/20_schema.sql:ro
+      - ./db/init/002_seed.sql:/docker-entrypoint-initdb.d/30_seed.sql:ro
+      - ./db/init/003_geography_index.sql:/docker-entrypoint-initdb.d/40_geography_index.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geoportal -d geoportal"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+volumes:
+  geoportal_pgdata:

@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+html, body { min-height: 100%; }
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.main-layout { flex: 1; display: grid; grid-template-columns: 360px minmax(0, 1fr); min-height: 620px; }
+.sidebar { overflow-y: auto; max-height: calc(100vh - 110px); }
+.map-wrap { position: relative; min-height: 620px; }
+#mapa { position: absolute; inset: 0; }
+.map-hint { position: absolute; bottom: 28px; left: 16px; right: 48px; z-index: 1; width: fit-content; max-width: calc(100% - 64px); background: rgba(255,255,255,.95); padding: 9px 13px; border-radius: 9px; font-size: 13px; color: #334155; box-shadow: 0 3px 15px #0f172a26; pointer-events: none; }
+button { cursor: pointer; }
+button:disabled { opacity: .5; cursor: wait; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #0d9488; outline-offset: 2px; }
+.maplibregl-popup-content { max-width: 280px; overflow-wrap: anywhere; }
+.maplibregl-popup-content p { margin-top: 6px; }
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar { animation: deslizar-panel .4s ease-out both; }
+  #lista li { animation: deslizar-resultado .25s ease-out both; }
+  .registro-confirmado { animation: deslizar-resultado .3s ease-out both; }
+}
+@keyframes deslizar-panel {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes deslizar-resultado {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 850px) {
+  .main-layout { display: flex; flex-direction: column-reverse; }
+  .sidebar { max-height: none; }
+  .map-wrap { height: 56vh; min-height: 360px; }
+}

@@ -66,6 +66,36 @@
                 /* Desaparece suavemente */
             }
         }
+
+        .formulario-manzana {
+            min-width: 260px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .formulario-manzana label {
+            display: block;
+            margin: 6px 0 2px;
+            font-weight: bold;
+        }
+
+        .formulario-manzana input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 5px;
+        }
+
+        .formulario-manzana button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 7px;
+            cursor: pointer;
+        }
+
+        .mensaje-manzana {
+            margin-top: 6px;
+            color: #b91c1c;
+        }
     </style>
 </head>
 
@@ -125,8 +155,8 @@
 
         const map = new maplibregl.Map({
             container: 'map',
-            center: [-74.2219243, -13.1477916],
-            zoom: 6,
+            center: [-76.320535481, -13.17694575],
+            zoom: 12,
             // Definimos el estilo manualmente para usar tiles de satélite
             style: {
                 'version': 8,
@@ -151,6 +181,159 @@
                     }
                 ]
             }
+        });
+
+        async function cargarManzanas (ajustarVista = false) {
+            const respuesta = await fetch('http://127.0.0.1:3000/api/v1/manzanas');
+            if (!respuesta.ok) {
+                throw new Error(`La API respondio con estado ${respuesta.status}`);
+            }
+
+            const resultado = await respuesta.json();
+            const geojson = resultado.rows?.[0]?.geojson;
+
+            if (!geojson || geojson.type !== 'FeatureCollection') {
+                throw new Error('La respuesta no contiene un FeatureCollection en rows[0].geojson');
+            }
+
+            if (map.getSource('manzanas')) {
+                map.getSource('manzanas').setData(geojson);
+            } else {
+                map.addSource('manzanas', {
+                    type: 'geojson',
+                    data: geojson
+                });
+
+                map.addLayer({
+                    id: 'manzanas-relleno',
+                    type: 'fill',
+                    source: 'manzanas',
+                    paint: {
+                        'fill-color': '#f59e0b',
+                        'fill-opacity': 0.35
+                    }
+                });
+
+                map.addLayer({
+                    id: 'manzanas-borde',
+                    type: 'line',
+                    source: 'manzanas',
+                    paint: {
+                        'line-color': '#7c2d12',
+                        'line-width': 1.5
+                    }
+                });
+
+                map.addLayer({
+                    id: 'manzanas-etiquetas',
+                    type: 'symbol',
+                    source: 'manzanas',
+                    layout: {
+                        'text-field': ['to-string', ['get', 'manzana']],
+                        'text-size': 12,
+                        'text-font': ['Open Sans Bold'],
+                        'text-anchor': 'center',
+                        'text-allow-overlap': true,
+                        'text-ignore-placement': true
+                    },
+                    paint: {
+                        'text-color': '#ffffff',
+                        'text-halo-color': '#7c2d12',
+                        'text-halo-width': 1.5
+                    }
+                });
+
+                map.on('click', 'manzanas-relleno', mostrarPopupManzana);
+
+                map.on('mouseenter', 'manzanas-relleno', () => {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+
+                map.on('mouseleave', 'manzanas-relleno', () => {
+                    map.getCanvas().style.cursor = '';
+                });
+            }
+
+            if (ajustarVista && geojson.features.length > 0) {
+                const limites = new maplibregl.LngLatBounds();
+                geojson.features.forEach((feature) => {
+                    const geometria = feature.geometry;
+                    const coordenadas = geometria.type === 'Polygon'
+                        ? geometria.coordinates.flat(1)
+                        : geometria.coordinates.flat(2);
+
+                    coordenadas.forEach(([longitud, latitud]) => {
+                        limites.extend([longitud, latitud]);
+                    });
+                });
+                map.fitBounds(limites, { padding: 40, maxZoom: 18 });
+            }
+        }
+
+        function mostrarPopupManzana (evento) {
+            const propiedades = evento.features?.[0]?.properties || {};
+            const id = propiedades.id;
+            const campos = Object.entries(propiedades)
+                .filter(([clave]) => clave !== 'id')
+                .map(([clave, valor]) => `
+                    <label for="campo-${escaparHtml(clave)}">${escaparHtml(clave)}</label>
+                    <input id="campo-${escaparHtml(clave)}" name="${escaparHtml(clave)}" value="${escaparHtml(valor)}">
+                `)
+                .join('');
+
+            const popup = new maplibregl.Popup()
+                .setLngLat(evento.lngLat)
+                .setHTML(`
+                    <form class="formulario-manzana" id="formulario-manzana">
+                        ${campos}
+                        <button type="submit">Guardar cambios</button>
+                        <div class="mensaje-manzana" aria-live="polite"></div>
+                    </form>
+                `)
+                .addTo(map);
+
+            popup.getElement().querySelector('#formulario-manzana').addEventListener('submit', async (submitEvent) => {
+                submitEvent.preventDefault();
+                const formulario = submitEvent.currentTarget;
+                const boton = formulario.querySelector('button');
+                const mensaje = formulario.querySelector('.mensaje-manzana');
+                const propiedadesActualizadas = Object.fromEntries(new FormData(formulario));
+
+                boton.disabled = true;
+                mensaje.textContent = '';
+
+                try {
+                    const respuesta = await fetch(`http://127.0.0.1:3000/api/v1/manzanas/${encodeURIComponent(id)}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ properties: propiedadesActualizadas })
+                    });
+
+                    if (!respuesta.ok) {
+                        const error = await respuesta.json();
+                        throw new Error(error.error || 'No se pudieron guardar los cambios');
+                    }
+
+                    await cargarManzanas();
+                    popup.remove();
+                } catch (error) {
+                    mensaje.textContent = error.message;
+                    boton.disabled = false;
+                }
+            });
+        }
+
+        function escaparHtml (valor) {
+            return String(valor ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        map.on('load', () => {
+            cargarManzanas(true).catch((error) => console.error('No se pudieron cargar las manzanas:', error));
         });
 
         map.addControl(new mapboxgl.Minimap({
